@@ -1,4 +1,4 @@
-<img src="[[https://cloud.githubusercontent.com/assets/yourgif.gif](https://raw.githubusercontent.com/marciolopesjr/FileSorter/main/FileSorter_logo.png)](https://raw.githubusercontent.com/marciolopesjr/FileSorter/main/FileSorter_logo.png)" width="400" height="790">
+<img src="[[https://cloud.githubusercontent.com/assets/yourgif.gif](https://raw.githubusercontent.com/marciolopesjr/FileSorter/main/FileSorter_logo.png)](https://raw.githubusercontent.com/marciolopesjr/FileSorter/main/FileSorter_logo.png)" width="400" height="400">
 
 # FileSorter
 
