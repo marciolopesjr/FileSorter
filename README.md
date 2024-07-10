@@ -1,5 +1,4 @@
-https://raw.githubusercontent.com/marciolopesjr/FileSorter/main/FileSorter_logo.png 
-
+![Logo](FileSorter_logo.png)
 # FileSorter
 
 ## Descrição
