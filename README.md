@@ -1,4 +1,5 @@
-![Logo](FileSorter_logo.png)
+![Logo](FileSorter_logo.png  | width=100)
+
 # FileSorter
 
 ## Descrição
