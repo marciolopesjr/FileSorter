@@ -1,4 +1,4 @@
-<img src="(https://raw.githubusercontent.com/marciolopesjr/FileSorter/main/FileSorter_logo.png)" width="100" height="100">
+<img src="https://raw.githubusercontent.com/marciolopesjr/FileSorter/main/FileSorter_logo.png" width="100" height="100">
 # FileSorter
 
 ## Descrição
