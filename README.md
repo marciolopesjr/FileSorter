@@ -4,25 +4,26 @@
 
 ## Descrição
 
-O FileSorter é um script Python simples que organiza automaticamente os arquivos em uma pasta com base em suas extensões. Ele cria pastas separadas para cada tipo de arquivo e move os arquivos correspondentes para suas respectivas pastas.
+O FileSorter é uma ferramenta com interface gráfica (GUI) que organiza automaticamente os arquivos em uma pasta com base em suas extensões. Ele permite que os usuários definam regras de organização personalizadas para agrupar diferentes tipos de arquivo em pastas específicas.
 
 ## Recursos
 
-* Organiza arquivos por extensão.
-* Cria pastas automaticamente para cada tipo de arquivo.
-* Nomes de pasta em letras maiúsculas para melhor organização.
-* Fácil de usar com interface de linha de comando.
+* **Interface Gráfica Amigável:** Fácil de usar, com botões para selecionar pastas e organizar arquivos.
+* **Organização Personalizável:** Defina suas próprias regras para agrupar arquivos (por exemplo, colocar `.jpg` e `.png` na pasta "IMAGENS").
+* **Regras Persistentes:** Suas regras de organização são salvas em um arquivo `config.json` e carregadas automaticamente sempre que você usa a ferramenta.
+* **Criação Automática de Pastas:** As pastas de destino são criadas automaticamente se não existirem.
 
 ## Como usar
 
 1. **Clone o repositório:** `git clone https://github.com/seu-usuario/FileSorter.git`
 2. **Navegue até o diretório:** `cd FileSorter`
-3. **Execute o script:** `python file_sorter.py`
-4. **Informe o caminho da pasta:** Digite o caminho completo da pasta que deseja organizar quando solicitado.
-
-## Exemplo
-
-Se você tiver uma pasta chamada "Downloads" com arquivos de diferentes tipos (por exemplo, PDFs, imagens, documentos do Word), o script criará subpastas dentro de "Downloads" para cada tipo de arquivo (por exemplo, "PDF", "JPG", "DOCX") e moverá os arquivos correspondentes para suas respectivas pastas.
+3. **Execute a aplicação:** `python FileSorter.py`
+4. **Selecione uma Pasta:** Clique no botão "Selecionar Pasta" para escolher o diretório que você deseja organizar.
+5. **Gerencie as Regras (Opcional):**
+   - Clique em "Gerenciar Regras" para abrir a janela de regras.
+   - Adicione, atualize ou remova regras de organização conforme necessário.
+   - Clique em "Salvar e Fechar" para salvar suas alterações.
+6. **Organize os Arquivos:** Clique no botão "Organizar Arquivos" para iniciar o processo. Os arquivos serão movidos para as pastas de acordo com suas regras.
 
 ## Contribuindo
 
