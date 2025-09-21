@@ -1,0 +1,6 @@
+# Ficheiro: requirements.txt
+
+platformdirs==4.2.2
+tkinterdnd2
+google-generativeai
+python-dotenv

@@ -1,0 +1,351 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+config.json
+FileSorter.py
+LICENSE
+logic.py
+README.md
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="config.json">
+{
+  "DOCUMENTS": ["pdf", "docx", "txt"],
+  "IMAGES": ["jpg", "jpeg", "png", "gif"],
+  "VIDEOS": ["mp4", "mov", "avi"]
+}
+</file>
+
+<file path="LICENSE">
+MIT License
+
+Copyright (c) 2024 Márcio Lopes
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</file>
+
+<file path="logic.py">
+import os
+import shutil
+import json
+
+class FileSorterLogic:
+    def __init__(self, config_path='config.json'):
+        """Inicializa a lógica de ordenação e carrega as regras."""
+        self.config_path = config_path
+        self.rules = {}
+        self.load_rules()
+
+    def load_rules(self):
+        """Carrega as regras de ordenação do arquivo de configuração."""
+        try:
+            if os.path.exists(self.config_path):
+                with open(self.config_path, 'r') as f:
+                    self.rules = json.load(f)
+            else:
+                self.rules = {} # Inicia com regras vazias se o arquivo não existir
+        except (json.JSONDecodeError, IOError) as e:
+            print(f"Erro ao carregar o arquivo de configuração: {e}")
+            self.rules = {}
+
+    def save_rules(self):
+        """Salva as regras de ordenação atuais no arquivo de configuração."""
+        try:
+            with open(self.config_path, 'w') as f:
+                json.dump(self.rules, f, indent=2)
+        except IOError as e:
+            print(f"Erro ao salvar o arquivo de configuração: {e}")
+
+    def set_rules(self, rules):
+        """Define regras de ordenação personalizadas."""
+        self.rules = rules
+
+    def organizar_arquivos(self, pasta_origem):
+        """
+        Organiza os arquivos em uma pasta com base em suas extensões,
+        usando as regras carregadas.
+        """
+        if not os.path.isdir(pasta_origem):
+            print(f"Erro: A pasta de origem '{pasta_origem}' não foi encontrada.")
+            return
+
+        for filename in os.listdir(pasta_origem):
+            caminho_origem = os.path.join(pasta_origem, filename)
+            if os.path.isfile(caminho_origem):
+                extensao = os.path.splitext(filename)[1].lower()
+
+                if not extensao:
+                    continue
+
+                nome_pasta_destino = self.get_pasta_destino(extensao)
+
+                caminho_pasta_destino = os.path.join(pasta_origem, nome_pasta_destino)
+                os.makedirs(caminho_pasta_destino, exist_ok=True)
+
+                shutil.move(caminho_origem, os.path.join(caminho_pasta_destino, filename))
+
+    def get_pasta_destino(self, extensao):
+        """Determina a pasta de destino para uma dada extensão."""
+        ext_sem_ponto = extensao[1:]
+
+        for pasta, extensoes in self.rules.items():
+            if ext_sem_ponto in extensoes:
+                return pasta
+
+        return ext_sem_ponto.upper()
+</file>
+
+<file path="FileSorter.py">
+import tkinter as tk
+from tkinter import filedialog, messagebox, ttk
+from logic import FileSorterLogic
+import os
+
+class RulesWindow(tk.Toplevel):
+    def __init__(self, master, logic):
+        super().__init__(master)
+        self.title("Gerenciar Regras")
+        self.geometry("600x400")
+        self.logic = logic
+
+        # Frame para a Treeview
+        tree_frame = tk.Frame(self)
+        tree_frame.pack(pady=10, padx=10, fill="both", expand=True)
+
+        self.tree = ttk.Treeview(tree_frame, columns=("Pasta", "Extensões"), show="headings")
+        self.tree.heading("Pasta", text="Pasta")
+        self.tree.heading("Extensões", text="Extensões (separadas por vírgula)")
+        self.tree.pack(fill="both", expand=True)
+
+        self.load_rules_to_tree()
+
+        # Frame para adicionar/editar regras
+        edit_frame = tk.Frame(self)
+        edit_frame.pack(pady=10, padx=10, fill="x")
+
+        tk.Label(edit_frame, text="Pasta:").grid(row=0, column=0, padx=5, pady=5)
+        self.folder_entry = tk.Entry(edit_frame, width=20)
+        self.folder_entry.grid(row=0, column=1, padx=5, pady=5)
+
+        tk.Label(edit_frame, text="Extensões:").grid(row=0, column=2, padx=5, pady=5)
+        self.extensions_entry = tk.Entry(edit_frame, width=30)
+        self.extensions_entry.grid(row=0, column=3, padx=5, pady=5)
+
+        add_button = tk.Button(edit_frame, text="Adicionar/Atualizar", command=self.add_rule)
+        add_button.grid(row=1, column=0, columnspan=2, pady=10)
+
+        remove_button = tk.Button(edit_frame, text="Remover Selecionado", command=self.remove_rule)
+        remove_button.grid(row=1, column=2, columnspan=2, pady=10)
+
+        # Frame para salvar
+        save_frame = tk.Frame(self)
+        save_frame.pack(pady=10, padx=10)
+
+        save_button = tk.Button(save_frame, text="Salvar e Fechar", command=self.save_and_close)
+        save_button.pack()
+
+    def load_rules_to_tree(self):
+        self.tree.delete(*self.tree.get_children())
+        for folder, extensions in self.logic.rules.items():
+            self.tree.insert("", "end", values=(folder, ", ".join(extensions)))
+
+    def add_rule(self):
+        folder = self.folder_entry.get().strip()
+        extensions_str = self.extensions_entry.get().strip()
+
+        if not folder or not extensions_str:
+            messagebox.showwarning("Entrada Inválida", "Ambos os campos de pasta e extensões devem ser preenchidos.")
+            return
+
+        extensions = [ext.strip().lower() for ext in extensions_str.split(',')]
+        self.logic.rules[folder.upper()] = extensions
+        self.load_rules_to_tree()
+        self.folder_entry.delete(0, tk.END)
+        self.extensions_entry.delete(0, tk.END)
+
+    def remove_rule(self):
+        selected_item = self.tree.selection()
+        if not selected_item:
+            messagebox.showwarning("Nenhuma Seleção", "Por favor, selecione uma regra para remover.")
+            return
+
+        item_values = self.tree.item(selected_item, "values")
+        folder_to_remove = item_values[0]
+
+        if folder_to_remove in self.logic.rules:
+            del self.logic.rules[folder_to_remove]
+
+        self.load_rules_to_tree()
+
+    def save_and_close(self):
+        self.logic.save_rules()
+        messagebox.showinfo("Salvo", "Regras salvas com sucesso!")
+        self.destroy()
+
+class FileSorterGUI:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("FileSorter")
+        self.master.geometry("500x300")
+
+        self.logic = FileSorterLogic()
+        self.selected_folder = tk.StringVar()
+
+        main_frame = tk.Frame(self.master, padx=10, pady=10)
+        main_frame.pack(fill=tk.BOTH, expand=True)
+
+        # Botão de regras
+        rules_button = tk.Button(main_frame, text="Gerenciar Regras", command=self.open_rules_window)
+        rules_button.pack(anchor="ne", pady=5)
+
+        folder_frame = tk.Frame(main_frame)
+        folder_frame.pack(fill=tk.X, pady=5)
+
+        select_button = tk.Button(folder_frame, text="Selecionar Pasta", command=self.select_folder)
+        select_button.pack(side=tk.LEFT, padx=(0, 10))
+
+        folder_label = tk.Label(folder_frame, textvariable=self.selected_folder, relief=tk.GROOVE, bd=2)
+        folder_label.pack(fill=tk.X, expand=True)
+        self.selected_folder.set("Nenhuma pasta selecionada")
+
+        organize_button = tk.Button(main_frame, text="Organizar Arquivos", command=self.organize_files, height=2)
+        organize_button.pack(fill=tk.X, pady=10)
+
+        self.status_label = tk.Label(self.master, text="Pronto", bd=1, relief=tk.SUNKEN, anchor=tk.W)
+        self.status_label.pack(side=tk.BOTTOM, fill=tk.X)
+
+    def open_rules_window(self):
+        rules_win = RulesWindow(self.master, self.logic)
+        rules_win.transient(self.master)
+        rules_win.grab_set()
+        self.master.wait_window(rules_win)
+        # Recarregar regras no caso de terem sido alteradas
+        self.logic.load_rules()
+
+    def select_folder(self):
+        folder_path = filedialog.askdirectory()
+        if folder_path:
+            self.selected_folder.set(folder_path)
+            self.status_label.config(text=f"Pasta selecionada: {folder_path}")
+
+    def organize_files(self):
+        folder = self.selected_folder.get()
+        if not os.path.isdir(folder):
+            messagebox.showerror("Erro", "Por favor, selecione uma pasta válida primeiro.")
+            return
+
+        try:
+            self.status_label.config(text="Organizando arquivos...")
+            self.master.update_idletasks()
+            self.logic.organizar_arquivos(folder)
+            self.status_label.config(text="Organização concluída com sucesso!")
+            messagebox.showinfo("Sucesso", "Arquivos organizados com sucesso!")
+        except Exception as e:
+            self.status_label.config(text="Erro durante a organização.")
+            messagebox.showerror("Erro", f"Ocorreu um erro: {e}")
+
+def main():
+    root = tk.Tk()
+    app = FileSorterGUI(root)
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
+</file>
+
+<file path="README.md">
+<img src="https://raw.githubusercontent.com/marciolopesjr/FileSorter/main/FileSorter_logo.png" width="400" height="400">
+
+# FileSorter
+
+## Descrição
+
+O FileSorter é uma ferramenta com interface gráfica (GUI) que organiza automaticamente os arquivos em uma pasta com base em suas extensões. Ele permite que os usuários definam regras de organização personalizadas para agrupar diferentes tipos de arquivo em pastas específicas.
+
+## Recursos
+
+* **Interface Gráfica Amigável:** Fácil de usar, com botões para selecionar pastas e organizar arquivos.
+* **Organização Personalizável:** Defina suas próprias regras para agrupar arquivos (por exemplo, colocar `.jpg` e `.png` na pasta "IMAGENS").
+* **Regras Persistentes:** Suas regras de organização são salvas em um arquivo `config.json` e carregadas automaticamente sempre que você usa a ferramenta.
+* **Criação Automática de Pastas:** As pastas de destino são criadas automaticamente se não existirem.
+
+## Como usar
+
+1. **Clone o repositório:** `git clone https://github.com/seu-usuario/FileSorter.git`
+2. **Navegue até o diretório:** `cd FileSorter`
+3. **Execute a aplicação:** `python FileSorter.py`
+4. **Selecione uma Pasta:** Clique no botão "Selecionar Pasta" para escolher o diretório que você deseja organizar.
+5. **Gerencie as Regras (Opcional):**
+   - Clique em "Gerenciar Regras" para abrir a janela de regras.
+   - Adicione, atualize ou remova regras de organização conforme necessário.
+   - Clique em "Salvar e Fechar" para salvar suas alterações.
+6. **Organize os Arquivos:** Clique no botão "Organizar Arquivos" para iniciar o processo. Os arquivos serão movidos para as pastas de acordo com suas regras.
+
+## Contribuindo
+
+Contribuições são bem-vindas! Sinta-se à vontade para abrir um problema ou enviar um pull request.
+
+## Licença
+
+Este projeto está licenciado sob a licença MIT - consulte o arquivo [LICENSE](LICENSE) para obter detalhes.
+</file>
+
+</files>

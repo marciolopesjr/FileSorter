@@ -15,7 +15,7 @@ O FileSorter é uma ferramenta com interface gráfica (GUI) que organiza automat
 
 ## Como usar
 
-1. **Clone o repositório:** `git clone https://github.com/seu-usuario/FileSorter.git`
+1. **Clone o repositório:** `git clone https://github.com/marciolopesjr/FileSorter.git`
 2. **Navegue até o diretório:** `cd FileSorter`
 3. **Execute a aplicação:** `python FileSorter.py`
 4. **Selecione uma Pasta:** Clique no botão "Selecionar Pasta" para escolher o diretório que você deseja organizar.
