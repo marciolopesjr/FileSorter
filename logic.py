@@ -12,6 +12,80 @@ from threading import Event
 
 import google.generativeai as genai
 from dotenv import load_dotenv
+from openai import OpenAI
+
+
+class OpenAIRuleSuggester:
+    """Gera regras de organização contextuais usando APIs compatíveis com OpenAI."""
+
+    def __init__(self, api_key: str, base_url: Optional[str] = None, model: str = "gpt-3.5-turbo"):
+        if not api_key:
+            raise ValueError("Chave de API não fornecida.")
+        self.client = OpenAI(api_key=api_key, base_url=base_url)
+        self.model = model
+
+    def _build_messages(self, filenames: List[str], user_request: str) -> List[Dict[str, str]]:
+        system_instruction = """
+Você é um especialista em organização de ficheiros extremamente meticuloso. A sua tarefa é criar um conjunto de regras de organização analisando uma lista de nomes de ficheiros e um pedido do utilizador.
+
+As regras devem ser fornecidas num formato JSON estrito, que será uma LISTA de objetos.
+Cada objeto na lista representa UMA regra e deve conter DUAS chaves:
+1. "folder": O nome da pasta de destino (em MAIÚSCULAS e descritivo).
+2. "keywords": UMA LISTA de palavras-chave em minúsculas que, se encontradas no nome de um ficheiro, o moverão para esta pasta.
+
+Exemplo de resposta JSON válida:
+[
+  { "folder": "RELATORIOS_VENDAS", "keywords": ["vendas", "relatorio_q3"] },
+  { "folder": "FATURAS_CLIENTES", "keywords": ["fatura", "invoice", "recibo"] }
+]
+
+INSTRUÇÕES IMPORTANTES:
+- Se o pedido do utilizador for VAGO ou GENÉRICO (ex: "organize isto", "arrume a confusão"), a sua tarefa é inferir categorias lógicas a partir dos nomes dos ficheiros. Crie pastas como DOCUMENTOS, IMAGENS, TRABALHO, PESSOAL, etc., e atribua palavras-chave apropriadas.
+- Crie regras específicas primeiro, e depois uma regra mais genérica no final para apanhar ficheiros comuns (como por extensão, ex: [".pdf", ".docx"]) se nenhuma palavra-chave específica corresponder.
+- A sua resposta deve ser APENAS o array JSON. Sem explicações, sem markdown, apenas o JSON.
+"""
+        file_list_str = ", ".join(filenames)[:4000]
+        user_prompt = (f"Lista de nomes de ficheiros a analisar: {file_list_str}\n"
+                       f"Pedido do utilizador: \"{user_request}\"\n\n"
+                       f"Gere o array JSON com as regras de organização:")
+        
+        return [
+            {"role": "system", "content": system_instruction},
+            {"role": "user", "content": user_prompt}
+        ]
+
+    def suggest_rules(self, folder_path: Union[str, Path], user_request: str) -> Optional[List[Dict[str, Any]]]:
+        source_path = Path(folder_path)
+        if not source_path.is_dir():
+            logging.error(f"O caminho fornecido '{folder_path}' não é um diretório válido.")
+            return None
+
+        filenames = [f.name for f in source_path.iterdir() if f.is_file()][:150]
+        if not filenames:
+            return []
+
+        messages = self._build_messages(filenames, user_request)
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=0.3,
+                max_tokens=2000
+            )
+            
+            cleaned_response = response.choices[0].message.content.strip()
+            cleaned_response = cleaned_response.replace("```json", "").replace("```", "").strip()
+
+            rules = json.loads(cleaned_response)
+            if isinstance(rules, list) and all(isinstance(r, dict) and 'folder' in r and 'keywords' in r for r in rules):
+                return rules
+            else:
+                logging.error(f"Resposta da IA não está no formato esperado: {rules}")
+                return None
+        except Exception as e:
+            logging.error(f"Erro ao comunicar com a API OpenAI: {e}")
+            return None
+
 
 class GeminiRuleSuggester:
     """Gera regras de organização contextuais, agora com melhor manuseamento de pedidos vagos."""
@@ -227,3 +301,65 @@ class FileSorterLogic:
         except IOError as e:
             logging.error(f"Não foi possível escrever o relatório em '{report_path}': {e}")
             return ""
+
+
+def create_ai_suggester(provider: str, config: Dict[str, Any]) -> Optional[Union[OpenAIRuleSuggester, GeminiRuleSuggester]]:
+    """
+    Factory function para criar o suggestor de IA baseado no provedor configurado.
+    
+    Args:
+        provider: "openai" ou "gemini"
+        config: Dicionário com as configurações da API
+    
+    Returns:
+        Instância do suggestor ou None se falhar
+    """
+    if provider == "openai":
+        api_key = config.get("api_key", "")
+        base_url = config.get("base_url", None)
+        model = config.get("model", "gpt-3.5-turbo")
+        return OpenAIRuleSuggester(api_key=api_key, base_url=base_url, model=model)
+    
+    elif provider == "gemini":
+        return GeminiRuleSuggester()
+    
+    else:
+        logging.error(f"Provedor de IA desconhecido: {provider}")
+        return None
+
+
+def load_ai_config(config_path: Path) -> Tuple[str, Dict[str, Any]]:
+    """
+    Carrega a configuração da IA a partir do ficheiro de configuração.
+    
+    Returns:
+        Tuple com (provedor, config_dicionario)
+    """
+    default_config = {
+        "provider": "openai",
+        "openai": {
+            "api_key": "",
+            "base_url": "",
+            "model": "gpt-3.5-turbo"
+        },
+        "gemini": {}
+    }
+    
+    if config_path.exists():
+        try:
+            with config_path.open('r', encoding='utf-8') as f:
+                config = json.load(f)
+                provider = config.get("provider", "openai")
+                provider_config = config.get(provider, {})
+                
+                # Para OpenAI, carregar configurações específicas
+                if provider == "openai":
+                    load_dotenv()
+                    if not provider_config.get("api_key"):
+                        provider_config["api_key"] = os.getenv("OPENAI_API_KEY", "")
+                
+                return provider, provider_config
+        except (json.JSONDecodeError, IOError) as e:
+            logging.error(f"Erro ao carregar configuração da IA: {e}")
+    
+    return "openai", default_config["openai"]

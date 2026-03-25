@@ -1,5 +1,14 @@
-{
-  "DOCUMENTS": ["pdf", "docx", "txt"],
-  "IMAGES": ["jpg", "jpeg", "png", "gif"],
-  "VIDEOS": ["mp4", "mov", "avi"]
-}
+[
+  {
+    "folder": "DOCUMENTS",
+    "keywords": ["pdf", "docx", "txt"]
+  },
+  {
+    "folder": "IMAGES",
+    "keywords": ["jpg", "jpeg", "png", "gif"]
+  },
+  {
+    "folder": "VIDEOS",
+    "keywords": ["mp4", "mov", "avi"]
+  }
+]
